@@ -12,19 +12,15 @@ int g_temperature_max = 0;
 int g_temperature_min = 0;
 int g_humidity_max = 0;
 int g_humidity_min = 0;
-int g_daily_light = 0;
-int g_daily_temperature = 0;
-int g_daily_humidity = 0;
-int g_daily_counter = 0;
 
 static int print_callback(void *data, int argc, char **argv, char **azColName)
 {
    int i;
    for(i=0; i<argc; i++)
    {
-      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+      //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
    }
-   printf("\n");
+   //printf("\n");
    return 0;
 }
 
@@ -67,31 +63,6 @@ static int optimal_callback(void *data, int argc, char **argv, char **azColName)
    return 0;
 }
 
-static int daily_callback(void *data, int argc, char **argv, char **azColName)
-{
-   int i;
-   fprintf(stderr, "%s: ", (const char*)data);
-   for(i=0; i<argc; i++)
-   {
-      //printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-      if (strcmp(azColName[i],"LIGHT") == 0)
-      {
-          g_daily_light = atoi(argv[i]);
-      }
-      if (strcmp(azColName[i],"TEMPERATURE") == 0)
-      {
-          g_daily_temperature = atoi(argv[i]);
-      }
-      if (strcmp(azColName[i],"HUMIDITY") == 0)
-      {
-          g_daily_humidity = atoi(argv[i]);
-      }
-   }
-   g_daily_counter++;
-   printf("Counter = %d\n",g_daily_counter);
-   return 0;
-}
-
 int createDatabase()
 {
     sqlite3 *db;
@@ -129,12 +100,12 @@ int createTransactionTable()
 
     /* Create SQL statement */
     sql = "CREATE TABLE DATACOLLECTION("  \
-            "DATE           TEXT    NOT NULL," \
-            "HOUR           TEXT    NOT NULL," \
-            "LIGHT          INT     NOT NULL," \
-            "TEMPERATURE    INT     NOT NULL," \
-            "HUMIDITY       INT     NOT NULL," \
-            "MOISTURE       INT     NOT NULL);";
+             "DATE                   TEXT    NOT NULL," \
+             "HOUR                  TEXT    NOT NULL," \
+             "LIGHT                   INT     NOT NULL," \
+             "TEMPERATURE     INT     NOT NULL," \
+             "HUMIDITY             INT     NOT NULL," \
+             "MOISTURE            INT     NOT NULL);";
 
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, print_callback, 0, &zErrMsg);
@@ -168,13 +139,13 @@ int createOptimalValueTable()
 
     /* Create SQL statement */
     sql = "CREATE TABLE OPTIMALVALUES("  \
-            "NAME              TEXT    NOT NULL," \
-            "LIGHTMAX          INT     NOT NULL," \
-            "LIGHTMIN          INT     NOT NULL," \
-            "TEMPERATUREMAX    INT     NOT NULL," \
-            "TEMPERATUREMIN    INT     NOT NULL," \
-            "HUMIDITYMAX       INT     NOT NULL," \
-            "HUMIDITYMIN       INT     NOT NULL)";
+             "NAME                         TEXT    NOT NULL," \
+             "LIGHTMAX                  INT     NOT NULL," \
+             "LIGHTMIN                   INT     NOT NULL," \
+             "TEMPERATUREMAX    INT     NOT NULL," \
+             "TEMPERATUREMIN     INT     NOT NULL," \
+             "HUMIDITYMAX            INT     NOT NULL," \
+             "HUMIDITYMIN             INT     NOT NULL)";
 
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, print_callback, 0, &zErrMsg);
@@ -191,7 +162,7 @@ int createOptimalValueTable()
     return 1;
 }
 
-int createDailyDataTable()
+int createDailyFeedbackStatusTable()
 {
     sqlite3 *db;
     char *zErrMsg = 0;
@@ -207,11 +178,9 @@ int createDailyDataTable()
     }
 
     /* Create SQL statement */
-    sql = "CREATE TABLE DAILYDATA("  \
-            "DATE           TEXT    NOT NULL," \
-            "LIGHT          INT     NOT NULL," \
-            "TEMPERATURE    INT     NOT NULL," \
-            "HUMIDITY       INT     NOT NULL);";
+    sql = "CREATE TABLE DAILYSTATUS("  \
+             "DATE                    TEXT    NOT NULL," \
+             "FEEDBACK            INT      NOT NULL);";
 
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, print_callback, 0, &zErrMsg);
@@ -222,7 +191,7 @@ int createDailyDataTable()
     }
     else
     {
-        fprintf(stdout, "Daily value table created successfully\n");
+        fprintf(stdout, "Daily feedback value table created successfully\n");
     }
     sqlite3_close(db);
     return 1;
@@ -245,9 +214,9 @@ int insertTransactionTableItem(struct collectionData insert_data)
     // Converting current time to local time
     loc_time = localtime (&curtime);
 
-	snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
-	snprintf(hour_buf, 50,"%d:%d",loc_time->tm_hour,loc_time->tm_min);
-	
+    snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
+    snprintf(hour_buf, 50,"%02d:%02d",loc_time->tm_hour,loc_time->tm_min);
+    
     /* Open database */
     rc = sqlite3_open("automation.db", &db);
     if( rc )
@@ -256,7 +225,7 @@ int insertTransactionTableItem(struct collectionData insert_data)
         return 0;
     }
 
-    printf("Light = %d, Temp = %d, Humidity = %d, Moisture = %d\n",insert_data.light,insert_data.temperature,insert_data.humidity,insert_data.moisture);
+    printf("Light = %d, Temp = %d, Humidity = %d\n",insert_data.light,insert_data.temperature,insert_data.humidity);
     
     /* Create SQL statement */
     sql = sqlite3_mprintf("INSERT INTO DATACOLLECTION VALUES ('%q', '%q', %d, %d, %d, %d );",date_buf,hour_buf,
@@ -294,8 +263,8 @@ int selectTransactionTableItem()
     // Converting current time to local time
     loc_time = localtime (&curtime);
 
-	snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
-	
+    snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
+    
     /* Open database */
     rc = sqlite3_open("automation.db", &db);
     if( rc )
@@ -308,7 +277,7 @@ int selectTransactionTableItem()
     sql = sqlite3_mprintf("SELECT * FROM DATACOLLECTION WHERE DATE='%q'",date_buf);
     
     /* Execute SQL statement */
-    rc = sqlite3_exec(db, sql, daily_callback, (void*)data, &zErrMsg);
+    rc = sqlite3_exec(db, sql, print_callback, (void*)data, &zErrMsg);
     if( rc != SQLITE_OK )
     {
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -356,7 +325,7 @@ int insertOptimalTableItem(struct optimalData insert_data)
     return 1;    
 }
 
-int selectOptimalTableItem(char *search_data, struct optimalData *selected_data)
+int selectOptimalTableItem(char *name, struct optimalData *selected_data)
 {
     sqlite3 *db;
     char *zErrMsg = 0;
@@ -373,7 +342,7 @@ int selectOptimalTableItem(char *search_data, struct optimalData *selected_data)
     }
 
     /* Create SQL statement */
-    sql = sqlite3_mprintf("SELECT * FROM OPTIMALVALUES WHERE NAME='%q'",search_data);
+    sql = sqlite3_mprintf("SELECT * FROM OPTIMALVALUES WHERE NAME='%q'",name);
     
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, optimal_callback, (void*)data, &zErrMsg);
@@ -397,11 +366,11 @@ int selectOptimalTableItem(char *search_data, struct optimalData *selected_data)
     selected_data->humiditymin = g_humidity_min;
     
     printf("Selected Data Items LightMax = %d, LightMin = %d, TemperatureMax = %d, TemperatureMin = %d, HumidityMax = %d, HumidityMin = %d\n",
-			selected_data->lightmax,selected_data->lightmin,selected_data->temperaturemax,selected_data->temperaturemin,selected_data->humiditymax,selected_data->humiditymin);
+            selected_data->lightmax,selected_data->lightmin,selected_data->temperaturemax,selected_data->temperaturemin,selected_data->humiditymax,selected_data->humiditymin);
     return 1;
 }
 
-int insertDailyDataTableItem()
+int insertDailyFeedbackStatusTableItem(PlantStatus status)
 {
     sqlite3 *db;
     char *zErrMsg = 0;
@@ -417,8 +386,8 @@ int insertDailyDataTableItem()
     // Converting current time to local time
     loc_time = localtime (&curtime);
 
-	snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday - 1,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
-	
+    snprintf(date_buf, 50,"%d-%d-%d",loc_time->tm_mday,loc_time->tm_mon + 1,loc_time->tm_year + 1900);
+    
     /* Open database */
     rc = sqlite3_open("automation.db", &db);
     if( rc )
@@ -428,8 +397,7 @@ int insertDailyDataTableItem()
     }
     
     /* Create SQL statement */
-    sql = sqlite3_mprintf("INSERT INTO DAILYDATA VALUES ('%q', %d, %d, %d );",date_buf,
-                g_daily_light / g_daily_counter ,g_daily_temperature / g_daily_counter ,g_daily_humidity / g_daily_counter);
+    sql = sqlite3_mprintf("INSERT INTO DAILYSTATUS VALUES ('%q', %d );",date_buf,status);
     
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, print_callback, 0, &zErrMsg);
@@ -440,13 +408,10 @@ int insertDailyDataTableItem()
     }
     else
     {
-        fprintf(stdout, "Daily Data records added successfully\n");
-		g_daily_light = 0;
-		g_daily_temperature = 0;
-		g_daily_humidity = 0;
-		g_daily_counter = 0;
+        fprintf(stdout, "Daily Feedback status records added successfully\n");
     }
     sqlite3_close(db);
 
     return 1;    
 }
+

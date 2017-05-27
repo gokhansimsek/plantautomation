@@ -7,7 +7,7 @@
 
 int read_moisture_data()
 {
-	pinMode( MOISTUREPIN, INPUT );
-	uint8_t state = digitalRead( MOISTUREPIN );
-	return state;
+    pinMode( MOISTUREPIN, INPUT );
+    uint8_t state = digitalRead( MOISTUREPIN );
+    return state;
 }

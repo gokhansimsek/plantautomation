@@ -11,8 +11,8 @@
 
 typedef struct DHT11
 {
-	int temperature;
-	int humidity;
+    int temperature;
+    int humidity;
 } DHT11;
 
 /**

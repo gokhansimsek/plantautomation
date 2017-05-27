@@ -11,29 +11,36 @@
 
 typedef struct collectionData
 {
-	int light;
-	int temperature;
-	int humidity;
-	int moisture;
+    int light;
+    int temperature;
+    int humidity;
+    int moisture;
 } collectionData;
 
 typedef struct optimalData
 {
-	char name[50];
-	int lightmax;
-	int lightmin;
-	int temperaturemax;
-	int temperaturemin;
-	int humiditymax;
-	int humiditymin;
+    char name[50];
+    int lightmax;
+    int lightmin;
+    int temperaturemax;
+    int temperaturemin;
+    int humiditymax;
+    int humiditymin;
 } optimalData;
 
 typedef struct dailyData
 {
-	int light;
-	int temperature;
-	int humidity;
+    int light;
+    int temperature;
+    int humidity;
 } dailyData;
+
+typedef enum
+{
+    Better,
+    Normal,
+    Worse
+}PlantStatus;
 
 /**
  * Database and table initialization functions
@@ -41,7 +48,7 @@ typedef struct dailyData
 int createDatabase();
 int createTransactionTable();
 int createOptimalValueTable();
-int createDailyDataTable();
+int createDailyFeedbackStatusTable();
 
 /**
  * Transaction table related functions
@@ -53,9 +60,9 @@ int selectTransactionTableItem();
  * Optimal Values table related functions
  */
 int insertOptimalTableItem(struct optimalData insert_data);
-int selectOptimalTableItem(char *search_data, struct optimalData *selected_data);
+int selectOptimalTableItem(char *name, struct optimalData *selected_data);
 
 /**
- * Daily Values table related functions
+ * Daily Status table related functions
  */
-int insertDailyDataTableItem();
+int insertDailyFeedbackStatusTableItem(PlantStatus status);
