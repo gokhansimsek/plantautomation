@@ -429,7 +429,7 @@ int insertDailyDataTableItem()
     
     /* Create SQL statement */
     sql = sqlite3_mprintf("INSERT INTO DAILYDATA VALUES ('%q', %d, %d, %d );",date_buf,
-                g_daily_light,g_daily_temperature,g_daily_humidity);
+                g_daily_light / g_daily_counter ,g_daily_temperature / g_daily_counter ,g_daily_humidity / g_daily_counter);
     
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, print_callback, 0, &zErrMsg);

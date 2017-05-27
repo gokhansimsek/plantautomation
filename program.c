@@ -13,8 +13,8 @@
 #include "relay.h"
 #include "sql.h"
 
-#define READDELAY    5000
-#define DAILYWRITEDELAY 60000//3600000 // One hour
+#define READDELAY    10000 
+#define DAILYWRITEDELAY 3600000 // One hour
 
 void * transaction_thread()
 {
@@ -37,7 +37,7 @@ void * transaction_thread()
 
 		insertTransactionTableItem(transaction_data);
 
-		delay( READDELAY ); /* wait 5sec to refresh */
+		delay( READDELAY ); /* wait 10 seconds to refresh */
 	}
 }
 
@@ -55,15 +55,15 @@ void * daily_thread()
 		// Converting current time to local time
 		loc_time = localtime (&curtime);
 		
-		//if (loc_time->tm_hour = 14 )
-		//{
-			//insertDailyDataTableItem();
-		//}
-		//else
-		//{
-			//delay( DAILYWRITEDELAY );
-		//}
-		delay( DAILYWRITEDELAY );
+		if (loc_time->tm_hour = 14 )
+		{
+			insertDailyDataTableItem();
+		}
+		else
+		{
+			delay( DAILYWRITEDELAY );
+		}
+		
 		selectTransactionTableItem();
 		delay (1000);
 		insertDailyDataTableItem();
@@ -86,14 +86,6 @@ int main( void )
 	createOptimalValueTable();
 	createDailyDataTable();
 
-	//char name[50] = {0};
-	//int lightmax = 0;
-	//int lightmin = 0;
-	//int temperaturemax = 0;
-	//int temperaturemin = 0;
-	//int humiditymax = 0;
-	//int humiditymin = 0;
-	
 	strncpy(optimal_data.name,"ORKIDE",50);
 	optimal_data.lightmax = 1000;
 	optimal_data.lightmin = 300;
